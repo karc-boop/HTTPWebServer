@@ -1,4 +1,4 @@
- #include "HttpResponse.h"
+#include "HttpResponse.h"
 #include <stdio.h>
 
 #ifdef USE_RINGBUFFER
@@ -28,19 +28,24 @@ using namespace back;
  */
 void HttpResponse::appendToBuffer(Buffer *output) const {
     char buf[32];
+    
+    // Format and append the HTTP status line to the buffer
     snprintf(buf, sizeof buf, "HTTP/1.1 %d ", statusCode_);
     output->append(buf);
     output->append(statusMessage_);
     output->append("\r\n");
 
+    // Check if the connection should be closed after the response
     if (closeConnection_) {
         output->append("Connection: close\r\n");
     } else {
+        // Append Content-Length and Connection headers
         snprintf(buf, sizeof buf, "Content-Length: %zd\r\n", body_.size());
         output->append(buf);
         output->append("Connection: Keep-Alive\r\n");
     }
 
+    // Append all headers from the headers_ map
     for (const auto &header : headers_) {
         output->append(header.first);
         output->append(": ");
@@ -48,10 +53,15 @@ void HttpResponse::appendToBuffer(Buffer *output) const {
         output->append("\r\n");
     }
 
+    // Append an empty line to indicate the end of the headers
     output->append("\r\n");
+
+    // Append the body of the response
     if (sendFile_) {
+        // If the response includes a file, append the file to the buffer
         output->appendFile(srcFd_, fileSize_);
     } else {
+        // Otherwise, append the body content
         output->append(body_);
     }
 }

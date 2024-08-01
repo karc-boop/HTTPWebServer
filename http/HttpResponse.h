@@ -1,58 +1,61 @@
+#include <map>
+#include <string>
 #include "Types.h"
 #include "Copyable.h"
 
-#include <map>
-
-namespace back{
+namespace back {
     class Buffer;
-    class HttpResponse : public copyable {
-        public:
-            enum HttpStatusCode {
-                Unknown,
-                200Ok = 200,
-                301MovedPermanently = 301,
-                400BadRequest = 400,
-                404NotFound = 404,
-            };
 
-            explicit HttpResponse(bool close)
-                : statusCode_(Unknown),
-                  closeConnection_(close),  sendFile_(false), fileSize_(0){}
+    class HttpResponse : public Copyable {
+    public:
+        enum HttpStatusCode {
+            Unknown,
+            k200Ok = 200,
+            k301MovedPermanently = 301,
+            k400BadRequest = 400,
+            k404NotFound = 404,
+        };
 
-            void setStatusCode(HttpStatusCode code) { statusCode_ = code; }
-            void setStatusMessage(const string &message) { statusMessage_ = message; }
-            void setCloseConnection(bool on) { closeConnection_ = on; }
-            bool closeConnection() const { return closeConnection_; }
+        explicit HttpResponse(bool close)
+            : statusCode_(Unknown),
+              closeConnection_(close),
+              sendFile_(false),
+              fileSize_(0),
+              srcFd_(0) {}
 
-            void setContentType(const string &contentType) {
-                addHeader("Content-Type", contentType);
-            }
+        void setStatusCode(HttpStatusCode code) { statusCode_ = code; }
+        void setStatusMessage(const std::string &message) { statusMessage_ = message; }
+        void setCloseConnection(bool on) { closeConnection_ = on; }
+        bool closeConnection() const { return closeConnection_; }
 
-            void addHeader(const string &key, const string &value) {
-                headers_[key] = value;
-            }
+        void setContentType(const std::string &contentType) {
+            addHeader("Content-Type", contentType);
+        }
 
-            void setBody(const string &body) { body_ = body; }
+        void addHeader(const std::string &key, const std::string &value) {
+            headers_[key] = value;
+        }
 
-            void setFileSize(size_t fileSize) { fileSize_ = count; sendFile_ = true; }
+        void setBody(const std::string &body) { body_ = body; }
 
-            size_t getFileSize() const { return fileSize_; }
+        void setFileSize(size_t fileSize) { fileSize_ = fileSize; sendFile_ = true; }
 
-            void setSrcFd(size_t srcFd) { srcFd_ = srcFd; }
+        size_t getFileSize() const { return fileSize_; }
 
-            void getSrcFd() const { return srcFd_; }
+        void setSrcFd(size_t srcFd) { srcFd_ = srcFd; }
 
-            void appendToBuffer(Buffer *output) const;
+        size_t getSrcFd() const { return srcFd_; }
 
-        private:
-            std::map<string, string> headers_;
-            HttpStatusCode statusCode_;
-            string statusMessage_;
-            bool closeConnection_;
-            bool sendFile_;
-            size_t fileSize_;
-            size_t srcFd_;
-            string body_;
+        void appendToBuffer(Buffer *output) const;
+
+    private:
+        std::map<std::string, std::string> headers_;
+        HttpStatusCode statusCode_;
+        std::string statusMessage_;
+        bool closeConnection_;
+        bool sendFile_;
+        size_t fileSize_;
+        size_t srcFd_;
+        std::string body_;
     };
 }
-
